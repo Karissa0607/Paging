@@ -1,0 +1,106 @@
+FIFO vs LRU:
+
+1. LRU hit rate > FIFO hit rate:
+Use memsize is 3 and LRUbetterthanFIFO.ref to test
+Trace:
+L 1fff000778,8 
+I  048ac28a,4
+M 04a81748,4
+L 1fff000778,8 
+S 04a7f214,4
+I  00109408,8
+L 1fff000778,8
+
+LRU:
+L 1fff000778,8 will be assigned to page frame number 0. I  048ac28a,4 will be assigned to page frame number 1. M 04a81748,4 will be assigned to page frame number 2. These first three instructions are compulsory misses. At this point, L 1fff000778,8 with page frame 0 is the least recently used and M 04a81748,4 with page frame 2 is the most recently used.  L 1fff000778,8 is already assigned a page frame number so it will be a hit. Now, L 1fff000778,8 with page frame 0 is the most recently used and I  048ac28a,4 with page frame 1 is the least recently used. S 04a7f214,4 will result in a miss and it will be assigned page frame 1. Now, S 04a7f214,4 with page frame 1 is the most recently used and M 04a81748,4 with page frame 2 is the least recently used. I  00109408,8 will result in a miss and will be assigned page frame 2 as it is the least recently used. Now, I  00109408,8 with page frame 2 is the most recently used and L 1fff000778,8 with page frame 0 is the least recently used. L 1fff000778,8 will be a hit making page frame 0 the most recently used and  S 04a7f214,4 with page frame 1 the least recently used.
+There will be 2 hits and 5 misses. 
+
+FIFO
+L 1fff000778,8 will be assigned to page frame number 0. I  048ac28a,4 will be assigned to page frame number 1. M 04a81748,4 will be assigned to page frame number 2. These will all have compulsory misses. L 1fff000778,8  will be a hit. S 04a7f214,4 will be a miss and it will be given page frame 0 evicting L 1fff000778,8. I  00109408,8 will be a miss and it will be given page frame 1 evicting  I  048ac28a,4. L 1fff000778,8 will be a miss and it will be given page frame 2 evicting M 04a81748,4. 
+There will be 1 hit and 6 misses.
+
+
+2. FIFO hit rate > LRU hit rate:
+Use memsize is 3 and FIFObetterthanLRU.ref to test
+Trace:
+L 1fff000778,8 
+I  048ac28a,4
+M 04a81748,4
+L 1fff000778,8
+S 04a7f214,4
+I  048ac28a,4
+
+FIFO:
+L 1fff000778,8 will be assigned to page frame number 0. I  048ac28a,4 will be assigned to page frame number 1. M 04a81748,4 will be assigned to page frame number 2. These first three instructions are compulsory misses. L 1fff000778,8 will be a hit. S 04a7f214,4 will be assigned to page frame number 0 and L 1fff000778,8 will be evicted. I  048ac28a,4 is a hit as it is still assigned to page frame number 1. This will make 2 hits and 4 misses.
+
+LRU:
+L 1fff000778,8 will be assigned to page frame number 0. I  048ac28a,4 will be assigned to page frame number 1. M 04a81748,4 will be assigned to page frame number 2. These first three instructions are compulsory misses. At this point, L 1fff000778,8 with page frame 0 is the least recently used and M 04a81748,4 with page frame 2 is the most recently used. L 1fff000778,8 will be a hit. Now, L 1fff000778,8 with page frame number 0 is the most recently used and  I  048ac28a,4 with page frame 1 is the least recently used. S 04a7f214,4 will be a miss, assigning it to page frame 1 and it will evict I  048ac28a,4. Now, S 04a7f214,4 with page frame 1 is the most recently used and page frame number 2 with M 04a81748,4 is the least recently used .I  048ac28a,4 will be a miss, assigning to page frame number 2 evicting M 04a81748,4.
+There will be 1 hit and 5 misses. 
+
+
+
+
+LRU vs CLOCK:
+
+1. LRU hit rate > CLOCK hit rate
+Use memsize of 3 and LRUbetterthanCLOCK.ref to test
+Trace:
+L 1fff000778,8  
+I  048ac28a,4  
+M 04a81748,4  
+S 04a7f214,4
+I  048ac28a,4
+S 04a7f214,4
+M 04a81748,4
+L 1fff000778,8
+S 04a7f214,4
+This trace causes LRU to be better than CLOCK due to the fact that when 6th instruction runs, which is S 04a7f214,4, it does not affect the reference used bit. This is because the 4th instruction S 04a7f214,4 was previously referenced so its used bit was already 1 so the 6th instruction had no effect on it. With LRU the 6th instruction would change the physical frame number in S 04a7f214,4 to be the most recently used. When instructions that already have a reference bit of 1 is referenced again it does not affect anything unlike how LRU would make that instruction the most recently used page frame. 
+
+
+2. CLOCK hit rate > LRU hit rate
+Use memsize of 3 and CLOCKbetterthanLRU.ref to test
+Trace:
+L 1fff000778,8
+I  048ac28a,4
+M 04a81748,4
+I  048ac28a,4
+L 1fff000778,8
+S 04a7f214,4
+M 04a81748,4
+I  048ac28a,4
+
+CLOCK:
+L 1fff000778,8 will be assigned to page frame number 0. I  048ac28a,4 will be assigned to page frame number 1. M 04a81748,4 will be assigned to page frame number 2. These first three instructions are compulsory misses. Each page frame number is assigned a reference of 1, which is true, as they have all been referenced. The pointer starts at index 0 which is page frame number 0 which refers to L 1fff000778,8.  I  048ac28a,4 is a hit and it will keep the page frame number 1 a reference value of 1. L 1fff000778,8 is a hit and it will keep the page frame number 0 a reference value of 1. S 04a7f214,4 is a miss and the clock pointer will increase until it finds a page frame number with a reference of 0. When it is checking for page frame number references, if it finds a 1 while searching it will switch the 1 to a 0. The S 04a7f214,4 instruction will evict L 1fff000778,8 so it will be assigned to page frame number 0 and since it is referenced it will have a reference value of 1. At this point all page frame numbers have a reference of 0 and the pointer is at index 1 so page frame number 1. M 04a81748,4 is a hit so it changes the page frame number 2 to a reference of 1. I  048ac28a,4 is a hit so it changes the page frame number 1 to a reference of 1. 
+There are 4 misses and 4 hits.
+
+LRU:
+L 1fff000778,8 will be assigned to page frame number 0. I  048ac28a,4 will be assigned to page frame number 1. M 04a81748,4 will be assigned to page frame number 2. These first three instructions are compulsory misses. At this point, L 1fff000778,8 with page frame 0 is the least recently used and M 04a81748,4 with page frame 2 is the most recently used. I  048ac28a,4 is a hit so page frame number 1 is the most recently used and page frame 0 is the least recently used. L 1fff000778,8 is a hit so page frame 0 is the most recently used and page frame 2 is the least recently used. S 04a7f214,4 is a miss and will evict M 04a81748,4 which is page frame number 2. Now, page frame 2 with S 04a7f214,4 is the most recently used and page frame 1 with I  048ac28a,4 is the least recently used. M 04a81748,4 is a miss and will evict page frame number 1 with I  048ac28a,4. Now, M 04a81748,4 with page frame number 1 is the most recently used and page frame number 0 with L 1fff000778,8 is the least recently used. I  048ac28a,4 is a miss so it will evict page frame number 0 as it is the least recently used.
+There are 2 hits and 6 misses.
+
+
+
+
+LRU vs ARC:
+
+1. LRU hit rate > ARC hit rate
+
+This is not possible, ARC outperforms LRU in all cases. Since ARC dynamically changes based on the workload, it is more effective than a static LRU algorithm.
+
+2. ARC hit rate > LRU hit rate
+Use memsize is 3 and ARCbetterthanLRU.ref to test:
+Trace:
+L 1fff000778,8 
+I  048ac28a,4
+M 04a81748,4
+S 04a7f214,4
+M 04a81748,4
+S 04a7f214,4
+L 1fff000778,8
+I  048ac28a,4
+M 04a81748,4
+
+ARC
+Here the first 3 instructions are compulsory misses. At this point T1 contains, “L 1fff000778,8” (pfn 0) is the least recently used and “M 04a81748,4” (pfn = 2) is the most recently used. The next instruction will be a miss, so in T1 “I  048ac28a,4”  (pfn 0) is the least recently used and “S 04a7f214,4” (pfn = 2) is the most recently used, “L 1fff000778,8”  will be evicted. Next, “M 04a81748,4” will be a hit, so now in T1 “I  048ac28a,4” (pfn = 0) is the least recently used and “S 04a7f214,4” (pfn = 1) is the most recently used and T2 contains “M 04a81748,4” which is the most recently used. Next, “S 04a7f214,4” is a hit, so T1 contains “I  048ac28a,4” (pfn = 0) and T2 contains “S 04a7f214,4”(pfn = 1) at most recently used and “M 04a81748,4”(pfn = 2) is the least recently used. Then, “L 1fff000778,8” will be a miss, so T1 contains “L 1fff000778,8” (pfn = 0), T2 contains “S 04a7f214,4”(pfn = 1) at most recently used and “M 04a81748,4”(pfn = 2) is the least recently used, and B1 contains “I  048ac28a,4”. Next, I  048ac28a,4 will be a miss, so T1 contains “I  048ac28a,4” (pfn = 0), T2 contains “S 04a7f214,4”(pfn = 1) at most recently used and “M 04a81748,4”(pfn = 2) is the least recently used, and B1 contains “L 1fff000778,8”. Finally “M 04a81748,4” will be a hit, so there have been a total of 6 misses and 3 hits.
+
+LRU:
+“L 1fff000778,8” will be assigned to pfn of  0. “I  048ac28a,4” will be assigned to pfn of 1. “M 04a81748,4” will be assigned to pfn of 2. These first three instructions are compulsory misses. At this point, “L 1fff000778,8” (pfn 0) is the least recently used and “M 04a81748,4” (pfn = 2) is the most recently used. The next instruction will be a miss, so “I  048ac28a,4”  (pfn 0) is the least recently used and “S 04a7f214,4” (pfn = 2) is the most recently used, “L 1fff000778,8”  will be evicted. Next, “M 04a81748,4” will be a hit, so now “I  048ac28a,4” (pfn = 0) is the least recently used and “M 04a81748,4” (pfn = 2) is the most recently used. Then, “S 04a7f214,4” is a hit, so now  “I  048ac28a,4”  (pfn 0) is the least recently used and “S 04a7f214,4” (pfn = 2) is the most recently used. Then, “L 1fff000778,8” is a miss, so now “M 04a81748,4” (pfn = 0) is the least recently used and “L 1fff000778,8” (pfn = 2) is the most recently used. Now, “I  048ac28a,4” is a miss, so now “S 04a7f214,4” (pfn = 0) is the least recently used and “I  048ac28a,4” (pfn = 2) is the most recently used. Finally, “M 04a81748,4” is a miss, so now now “L 1fff000778,8” (pfn = 0) is the least recently used and “M 04a81748,4” (pfn = 2) is the most recently used. Thus there have been a total of 7 misses and 2 hits.

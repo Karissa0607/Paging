@@ -1,0 +1,1 @@
+A simulation of the operation of page tables and page replacement policies. This project demonstrates virtual-to-physical address translation and demand paging using a three-level page table, as well as a set of page replacement algorithms: FIFO, CLOCK, exact LRU, and ARC.
